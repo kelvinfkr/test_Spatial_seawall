@@ -1,0 +1,116 @@
+{
+  "timestamp": "2025-11-14T17:37:05.532078",
+  "analyses": {
+    "return_periods": {
+      "T_100": {
+        "return_period": 100,
+        "scale_factor": 1.2302585092994045,
+        "mean_height_ft": 11.249999999999993,
+        "height_range_ft": 2.499999999999991,
+        "min_height_ft": 10.0,
+        "max_height_ft": 12.499999999999991,
+        "total_cost": 358934.8881002119,
+        "cost_per_sector": 7178.697762004238
+      },
+      "T_500": {
+        "return_period": 500,
+        "scale_factor": 1.3107304049211095,
+        "mean_height_ft": 11.249999999999993,
+        "height_range_ft": 2.499999999999991,
+        "min_height_ft": 10.0,
+        "max_height_ft": 12.499999999999991,
+        "total_cost": 359511.2082113816,
+        "cost_per_sector": 7190.224164227632
+      },
+      "T_1000": {
+        "return_period": 1000,
+        "scale_factor": 1.3453877639491068,
+        "mean_height_ft": 11.249999999999993,
+        "height_range_ft": 2.499999999999991,
+        "min_height_ft": 10.0,
+        "max_height_ft": 12.499999999999991,
+        "total_cost": 359771.55645951227,
+        "cost_per_sector": 7195.431129190245
+      }
+    },
+    "spatial_vs_uniform": {
+      "spatial": {
+        "method": "Spatial Optimization",
+        "mean_height_ft": 11.249999999999993,
+        "std_dev_ft": 0.7228416147400455,
+        "range_ft": 2.499999999999991,
+        "total_cost": 357531.9627996583,
+        "cost_per_ft_height": 31780.618915525203
+      },
+      "uniform": {
+        "method": "Uniform Standard",
+        "uniform_height_ft": 16.73063421134424,
+        "total_cost": 364063.4894714442,
+        "cost_per_ft_height": 21760.292220398333
+      },
+      "comparison": {
+        "cost_savings_dollars": 6531.5266717859195,
+        "cost_savings_percent": 1.794062535979244,
+        "insight": "Spatial design leverages local risk variation for cost savings"
+      }
+    },
+    "multiscale": {
+      "10km": {
+        "scale_km": 10,
+        "num_sectors": 20,
+        "mean_height_ft": 10.499999999999998,
+        "std_dev_ft": 0.291547594742264,
+        "range_ft": 0.9999999999999964,
+        "total_cost": 143326.27612323995,
+        "cost_per_km": 14332.627612323995,
+        "cost_per_sector": 7166.3138061619975
+      },
+      "50km": {
+        "scale_km": 50,
+        "num_sectors": 100,
+        "mean_height_ft": 12.499999999999991,
+        "std_dev_ft": 1.44395290781936,
+        "range_ft": 4.999999999999982,
+        "total_cost": 716914.1000588617,
+        "cost_per_km": 14338.282001177233,
+        "cost_per_sector": 7169.141000588616
+      },
+      "100km": {
+        "scale_km": 100,
+        "num_sectors": 200,
+        "mean_height_ft": 14.999999999999995,
+        "std_dev_ft": 2.887040006650418,
+        "range_ft": 10.000000000000036,
+        "total_cost": 1447515.0583829668,
+        "cost_per_km": 14475.150583829667,
+        "cost_per_sector": 7237.5752919148335
+      }
+    },
+    "cost_safety": {
+      "Minimal (90th %ile)": {
+        "design_height_ft": 13.050046069397846,
+        "total_cost": 359045.5427806596,
+        "failure_rate_percent": 10.0,
+        "cost_per_ft": 27512.971285412994
+      },
+      "Moderate (95th %ile)": {
+        "design_height_ft": 14.302437743192742,
+        "total_cost": 360522.17444119183,
+        "failure_rate_percent": 5.0,
+        "cost_per_ft": 25207.043786139373
+      },
+      "Good (98th %ile)": {
+        "design_height_ft": 15.70060873597923,
+        "total_cost": 362457.8913137004,
+        "failure_rate_percent": 2.0,
+        "cost_per_ft": 23085.594795002977
+      },
+      "Excellent (99th %ile)": {
+        "design_height_ft": 16.73063421134424,
+        "total_cost": 364063.4894714442,
+        "failure_rate_percent": 1.0,
+        "cost_per_ft": 21760.292220398333
+      }
+    }
+  }
+}
