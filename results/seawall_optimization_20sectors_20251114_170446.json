@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-11-14T17:04:46.597274",
+  "configuration": {
+    "num_sectors": 20,
+    "num_events": 1000,
+    "coastline_miles": 10.0,
+    "sector_length_miles": 0.5
+  },
+  "proposed_method": {
+    "name": "Proposed Pairwise Method",
+    "heights": 
