@@ -1,0 +1,67 @@
+{
+  "results": {
+    "timestamp": "2025-11-14T16:46:32.805014",
+    "configuration": {
+      "num_sectors": 20,
+      "num_events": 5000,
+      "coastline_miles": 5.0,
+      "search_range": [
+        15,
+        22
+      ],
+      "search_step": 1.0
+    },
+    "optimal_solution": {
+      "middle_height_ft": 15.0,
+      "total_cost": 313022.61370261986,
+      "sector_heights_ft": [
+        15.999999999999996,
+        15.899999999999997,
+        15.799999999999997,
+        15.699999999999998,
+        15.599999999999998,
+        15.499999999999998,
+        15.399999999999999,
+        15.299999999999999,
+        15.2,
+        15.1,
+        15.0,
+        15.1,
+        15.2,
+        15.299999999999999,
+        15.399999999999999,
+        15.499999999999998,
+        15.599999999999998,
+        15.699999999999998,
+        15.799999999999997,
+        15.899999999999997
+      ]
+    }
+  },
+  "analysis": {
+    "cost_breakdown": {
+      "construction_cost": 312876.75,
+      "expected_annual_damage": 145.86370261987022,
+      "total_cost": 313022.61370261986
+    },
+    "spatial_distribution": {
+      "height_statistics": {
+        "mean": 15.499999999999996,
+        "std": 0.291547594742264,
+        "min": 15.0,
+        "max": 15.999999999999996,
+        "range": 0.9999999999999964
+      },
+      "gradient_analysis": {
+        "max_diff_ft": 0.09999999999999964,
+        "mean_abs_diff": 0.09999999999999964,
+        "compliance_with_constraint": true
+      }
+    },
+    "coverage_analysis": {
+      "mean_protection_height": 15.499999999999996,
+      "most_exposed_sector": 0,
+      "most_protected_sector": 10
+    }
+  }
+}
