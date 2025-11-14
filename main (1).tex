@@ -1,0 +1,159 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, amsfonts}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\newtheorem{myDef}{Definition} 
+\newtheorem{myTheo}{Theorem}
+\newtheorem{myp}{Proof}
+\newtheorem{myasp}{Assumption}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\usepackage{enumerate}
+
+\title{Spatial Seawall Design Theory}
+\author{Kairui Feng}
+\date{April 27 2019}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+In this article we want to develop an approach to reach spatial optimal seawall design. A analytic equation for the relative optimal seawall height between two near by locations is given in this article. Thus, we could understand the roles that building exposure, flood risk and construction cost play in a spatial seawall. And also, the risk attitude could be analyzed in this model. Finally, a numerical algorithm for solving the optimal spatial seawall height is raised in this article.
+
+\section{The Problem}
+The seawall design problem is usually understood as an optimization problem for life cycle cost. For spatial seawall design problem, we are dealing with the following high dimensional problem:
+    \begin{align}
+        \min_{\vec{h}} \mathbf{E}(D(\vec{s},\vec{h}))+C(\vec{h}) = \sum_{t=0}^{T}\int_{0}^{+\infty}...\int_{0}^{+\infty}D(\vec{s},\vec{h})f_t(\vec{s})U_te^{-\rho_t}\mathbf{d} s_1...\mathbf{d} s_n+\sum_{i=1}^n C_i(h_i)
+    \end{align}
+In which the coastal line is separated into $n$ sectors and the designed seawall height at location $i$ is $h_i$, together composed $\vec{h}$.The seawall is built at the beginning of a designing period (year 0 to year T) and the total cost is calculated by the cumulative damage every year and the initial construction cost. The damage for a specific event with total spatial water height $\vec{s}$ is calculated as $D(\vec{s},\vec{h})$ given the spatial seawall height. The spatial surge distribution is calculated as $f_t(\vec{s})$ which changes over time. The urban development rate $U_t$ and discounting rate $\rho$ could also be discussed here. The construction cost for each location could be calculated separately as $C_i(h_i)$. For convenience, we rewrite the function $\sum_{t=0}^Tf_t(\vec{s})U_te^{-\rho_t}$ as $f(\vec{s})$, thus the problem becomes:
+
+  \begin{align}
+        \min_{\vec{h}} \sum_{t=0}^{T}\int_{0}^{+\infty}...\int_{0}^{+\infty}D(\vec{s},\vec{h})f(\vec{s})\mathbf{d} s_1...\mathbf{d} s_n+\sum_{i=1}^n C_i(h_i)
+    \end{align}
+This is a high-dimensional convex optimization problem because usually \\$\frac{\partial^2}{\partial h_1^2} D(\vec{s},\vec{h})f(\vec{s})\leq 0$ since the marginal cost of protection will decrease and also,$\frac{\partial^2}{\partial h_i^2} C_i(h_i)\geq 0$ because that when we are building a taller sea wall, more coastline should be covered thus the marginal cost will increase. The plus of two convex function is convex, thus, this problem has a unique solution. However, usually it's hard for people to implement optimization algorithms directly on this problem because different spatial seawall pattern would change the inundation region and results under a given event. Thus, when we are using Monte Carlo simulation method to approach the optimal solution of this problem, the previous recorded gradient information for former simulated events would be changed under the new decision. And thus lead to unavoidable computational cost.  Here we could still write out the gradient of this objective function which also severs as the optimal condition for spatial seawall design problem:
+\begin{equation}
+         \forall i, \sum_{t=0}^{T}\int_{0}^{+\infty}...\int_{0}^{+\infty}\frac{\partial}{\partial h_1}D(\vec{s},\vec{h})f(\vec{s})\mathbf{d} s_1...\mathbf{d} s_n+\frac{\partial}{\partial h_1}C_i(h_i)=0
+\end{equation}
+
+This high dimensional highly non-linear equation set determines that we could not solve the optimal solution for each single place separately.However, estimate the relative height for the seawall of two nearby locations seems to be possible.
+
+\section{Pairwise Comparison of Optimal Seawall Height}
+The throughout analysis of the spatial seawall seems could not be done analytically, however, the case would be much more clear when we are discussing the relative height for the seawall of two nearby locations ($i \& j$) seems to be possible. Before the beginning, we need to an assumption, which is the damage leaded by the flood over two nearby sections of a seawall is dominated by the highest sea level. The damage could be written as $D(s_i,s_j) = D(s_i\vee s_j)$. This assumption is adoptable is because the inundation area is usually similar given the same flood height for two nearby sections (For both static inundation or hydro-logical model).  Another assumption is, if the average flood height for location i is larger than the average flood height for location j, then $h_i\geq h_j$, which is quite common sense. We also need to note the annual probability for the flood damage is dominated by the levee failure of these 2 sectors as $\mathbf{P}_d(i,j)$ and the failure of section i as $F_i$.
+
+Thus, the expected cost (TC) lead by the failure of these two sections and construction can be written as:
+\begin{align}
+    TC(i,j) &= \mathbf{E} (D(F_i)+D(F_i)+D(F_i\cap F_j))\mathbf{P}_d(i,j)+C_i(h_i)+C_j(h_j)\\
+    TC(i,j)/\mathbf{P}_d(i,j)&= \int_{h_j}^{+\infty}\int_{-\infty}^{s_i} D(s_j)f(s_i,s_j)\mathbf{d}s_j\mathbf{d}s_i\\
+    &+\int_{h_i}^{+\infty}\int_{-\infty}^{s_j} D(s_i)f(s_i,s_j)\mathbf{d}s_1\mathbf{d}s_j\\
+    &+\int_{h_j}^{h_i}\int_{-\infty}^{s_i} D(s_i)f(s_i,s_j)\mathbf{d}s_j\mathbf{d}s_i\\
+    &+ (C_i(h_i)+C_j(h_j))/\mathbf{P}_d(i,j)
+\end{align}
+In this total damage equation, we calculated the expected damage for failure in each single sectors (Eq.5 \& 6) and failure in both sections (Eq.7) separately. As analyzed as a convex optimization problem, to solve the optimal seawall height here, we just need to write out the first order condition. And here we assume we've got the optimal seawall height for location i and j as $h_i$ and $h_j$,then they follows:
+
+\begin{align}
+    \frac{\partial }{\partial h_i } TC(i,j)/\mathbf{P}_d(i,j)&= -\int_{-\infty}^{h_j} D(h_i)f(h_i,s_j)\mathbf{d}s_j+ \frac{\partial}{\partial h_i}C_i(h_i)/\mathbf{P}_d(i,j)=0\\
+    \frac{\partial }{\partial h_j } TC(i,j)/\mathbf{P}_d(i,j)&= -\int_{-\infty}^{h_i} D(h_j)f(s_i,h_j)\mathbf{d}s_i+ \frac{\partial}{\partial h_j}C_j(h_j)/\mathbf{P}_d(i,j)=0
+\end{align}
+We can find that, the undermined $\mathbf{P}_d(i,j)$ prevents us from calculate the absolute hight for a single seawall sector. But now, we can eliminate them by divide Eq.9 to Eq.10, then we get:
+\begin{equation}
+    \frac{\int_{-\infty}^{h_j} D(h_i)f(h_i,s_j)\mathbf{d}s_j}{\int_{-\infty}^{h_i} D(h_j)f(s_i,h_j)\mathbf{d}s_i} = \frac{{\partial}/{\partial h_i}C_i(h_i)}{{\partial}/{\partial h_j}C_j(h_j)}
+\end{equation}
+
+And with some further derivation, we could write $f(h_i,s_j) = f_j(s_j|h_i)f_i(h_i)$, which means this probability can be separated to the marginal probability for the sea level to be over $h_i$ times the conditional probability that the sea level for location j would be $s_j$. We assume under climate change,  the spatial relationship which more comes from local geometry would not change dramatically, thus, we can take out the terms from the integration as:
+\begin{equation}
+    \frac{D(h_i)f_i(h_i)\int_{-\infty}^{h_j} f(s_j|h_i)\mathbf{d}s_j}{D(h_j)f_j(h_j)\int_{-\infty}^{h_i} f(s_i|h_j)\mathbf{d}s_i} = \frac{{\partial}/{\partial h_i}C_i(h_i)}{{\partial}/{\partial h_j}C_j(h_j)}
+\end{equation}
+
+To get further results, we need to add a condition for the relationship between $s_j$ ans $s_i$. We could assume this conditional probability follows normal distribution (not necessarily) and write the distribution for $s_j|s_i$ as $\mathcal{N}(s_i+\delta(s_i),\sigma_i^2)$ and $s_i|s_j$ as $\mathcal{N}(s_j+\delta(s_j),\sigma_j^2)$. And we note the relative difference $h_i-h_j$ which we are interested here as $\Delta h$. Thus, this gives us a possibility to analytically write out the two integrals in Eq.12 as:
+\begin{equation}
+    \frac{D(h_i)f_i(h_i)\Phi(\frac{-\Delta h-\delta(h_i)}{\sigma_i})}{D(h_j)f_j(h_j)\Phi(\frac{\Delta h-\delta(h_j)}{\sigma_j})} = \frac{{\partial}/{\partial h_i}C_i(h_i)}{{\partial}/{\partial h_j}C_j(h_j)}
+\end{equation}
+Here we find that, the term $\Phi(\frac{\Delta h-\delta(h_j)}{\sigma_j})/\Phi(\frac{-\Delta h-\delta(h_i)}{\sigma_i})$ increases when $\Delta h$ goes larger, thus it is a monotonous function. And we note this function as $G(\Delta h)$ and regard this as a relative risk measure between two locations.  On the other side, we get $\frac{D(h_i)f_i(h_i)}{\partial/ \partial h_i C_i(h_i)}$, the denominator is the investment cost of sea wall which increases by height, and the numerator is the marginal expected damage that could be prevented by increasing seawall height under the given state. Thus, this equation could be regarded as the marginal cost efficiency of the sea wall, which decreases with seawall height. We note this as $CE_i(h_i)$, and we can rearrange Eq.13 as:
+\begin{equation}
+G_{ij}(\Delta h) = CE_i(h_i)/CE_j(h_j)
+\end{equation}
+By simple analysis, we could find that when the cost efficiency of seawall at location i increases, the $\Delta h$ would increase, while decrease when cost efficiency of seawall at location j increases. Thus, the relative seawall height between sections is finally determined by the marginal cost efficiency of the seawall at different sectors, and could be analytically written as:
+\begin{equation}
+h_i = h_j  + G_{ij}^{-1}(CE_i(h_i)/CE_j(h_j))
+\end{equation}
+There are also some implication when we analyze Eq.15. When the cost efficiency for sector i and j equal to each other ($CE_i(h_i)/CE_j(h_j)=1$), the seawall height difference ($G_{ij}^-1(1)$) is determined by the relative marginal distribution of $s_i$ and $s_j$ .When $|\delta(h_j)|/\sigma_j = |\delta(h_i)|/\sigma_i $, the difference becomes 0, which matches with common sense. If the $|\delta(h_j)|/\sigma_j > |\delta(h_i)|/|\sigma_i|$, the $\Delta h$ tend to be larger, which means the system would also has trade-off between relative risk level and relative risk uncertainty. This ratio $|\delta(h_i)|/\sigma_i$ which shows the risk attitude in Capital Asset Pricing Model(CAPM,\url{https://www.investopedia.com/terms/c/capm.asp}) as risk-free rate $\beta_i$. The no biased treatment of that shows the risk neutral attitude of this model.
+
+To be noticed here, although during derivation we are using a normal distribution for conditional distribution of sea-levels. However, this is not necessary. Generally we just need a distribution with first two orders of momentum to get Eq.14 and Eq.15. The normal distribution is just used to show that the function $G(\cdot)$ is monotonous and also, for the risk-attitude analysis in last paragraph.
+
+\section{Numerical Scheme for Solving the Spatial Seawall Problem}
+Although the global damage function $D(\vec{s},\vec{h})$ is not computationally available, but the damage function for each single sector is available as $D(s_i)$ by assuming the sea level is just over this sector but no other sectors.And the marginal probability distribution $f(s_i)$ can easily be derived from the natural risk distribution.  The conditional probability $f_j(s_j|h_i)$is directly available from the surge data set (requires kernel function to estimate). The cost function could be estimated from the unit material cost and the shape of coastal line as $C_i(h_i)$. Thus, both $G_{ij}(\cdot)$ and $CE_i(h_i)$  is computable. So it is possible for we to compute $h_j$ from $h_i$ if the optimal seawall height $h_i$ is available. 
+
+Thus, the algorithm becomes simple one dimensional search after using the pairwise relative seawall height relationship to reduce the dimensions. The algorithm starts to let the seawall height at one seawall sector in the middle of coastal line as 15ft (which is the big U design height) to 22 ft, with 1 ft separation. And 8 experiments are applied to get the optimal seawall height at that sector. Given the seawall height at that sector, we apply Eq.15 to get the seawall height for all the sectors around the coastal line. We also do not want the seawall height has a lot of fluctuation, thus, the seawall height can not be changed over 10ft in 0.1mile(3\% inclining rate). Then we obtain the damage for our 5000 events and calculate out the expected total cost for each event under different spatial seawall design. And by comparing the total expected cost, we obtained the optimal spatial seawall distribution.
+
+\section{Result}
+
+To be decided based on Shullman's work and our data set.
+
+
+
+
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
