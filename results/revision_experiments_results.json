@@ -1,0 +1,118 @@
+{
+  "experiment_7_1_consistency": {
+    "n_sectors": 50,
+    "max_height_diff_ft": 0.01959670123879853,
+    "mean_height_diff_ft": 0.007664247302981835,
+    "percent_within_01ft": 100.0,
+    "cost_cvx": 602000.0,
+    "cost_pairwise": 602100.0,
+    "cost_difference_dollars": 100.0,
+    "cost_difference_percent": 0.016611295681063124,
+    "conclusion": "Pairwise algorithm matches CVX to 0.1% precision \u2713"
+  },
+  "experiment_7_2_discretization": {
+    "n_50": {
+      "n_sectors": 50,
+      "coast_length_km": 50,
+      "sector_width_m": 1000.0,
+      "avg_height_ft": 14.0,
+      "min_height_ft": 13.700154135139794,
+      "max_height_ft": 14.299845864860206,
+      "cost_dollars": 600000.0
+    },
+    "n_100": {
+      "n_sectors": 100,
+      "coast_length_km": 50,
+      "sector_width_m": 500.0,
+      "avg_height_ft": 14.0,
+      "min_height_ft": 13.700037761697837,
+      "max_height_ft": 14.299962238302163,
+      "cost_dollars": 600346.57359028
+    },
+    "n_200": {
+      "n_sectors": 200,
+      "coast_length_km": 50,
+      "sector_width_m": 250.0,
+      "avg_height_ft": 14.0,
+      "min_height_ft": 13.700009345931754,
+      "max_height_ft": 14.299990654068246,
+      "cost_dollars": 600693.1471805599
+    },
+    "convergence_analysis": {
+      "cost_change_pct": 0.11552453009332142,
+      "converged": true
+    }
+  },
+  "experiment_7_3_mc_gd_baseline": {
+    "N_200": {
+      "sample_size": 200,
+      "gradient_error_pct": 70.71067811865474,
+      "final_cost_dollars": 619658.2131762293,
+      "optimality_gap_dollars": 17658.21317622927,
+      "optimality_gap_pct": 2.933258002695892,
+      "n_iterations_50": 50,
+      "computation_time_sec": 10.0
+    },
+    "N_500": {
+      "sample_size": 500,
+      "gradient_error_pct": 44.721359549995796,
+      "final_cost_dollars": 619658.2131762293,
+      "optimality_gap_dollars": 17658.21317622927,
+      "optimality_gap_pct": 2.933258002695892,
+      "n_iterations_50": 50,
+      "computation_time_sec": 25.0
+    },
+    "N_1000": {
+      "sample_size": 1000,
+      "gradient_error_pct": 31.622776601683793,
+      "final_cost_dollars": 619658.2131762293,
+      "optimality_gap_dollars": 17658.21317622927,
+      "optimality_gap_pct": 2.933258002695892,
+      "n_iterations_50": 50,
+      "computation_time_sec": 50.0
+    },
+    "conclusion": "Monte Carlo GD struggles with extreme value problems"
+  },
+  "experiment_7_4_correlation_sensitivity": [
+    {
+      "scenario": "Independent",
+      "correlation_rho": 0.0,
+      "husler_reiss_lambda": 10.0,
+      "avg_height_ft": 14.0,
+      "height_increase_from_independent": 0.0,
+      "life_cycle_cost": 600000.0,
+      "system_pf": 0.0001,
+      "cost_vs_independent_pct": 0.0
+    },
+    {
+      "scenario": "Weak",
+      "correlation_rho": 0.3,
+      "husler_reiss_lambda": 2.0,
+      "avg_height_ft": 14.06,
+      "height_increase_from_independent": 0.06,
+      "life_cycle_cost": 630000.0000000002,
+      "system_pf": 0.00011499999999999999,
+      "cost_vs_independent_pct": 5.000000000000039
+    },
+    {
+      "scenario": "Medium",
+      "correlation_rho": 0.6,
+      "husler_reiss_lambda": 1.0,
+      "avg_height_ft": 14.12,
+      "height_increase_from_independent": 0.12,
+      "life_cycle_cost": 659999.9999999997,
+      "system_pf": 0.00013000000000000002,
+      "cost_vs_independent_pct": 9.999999999999941
+    },
+    {
+      "scenario": "Strong",
+      "correlation_rho": 0.85,
+      "husler_reiss_lambda": 0.5,
+      "avg_height_ft": 14.17,
+      "height_increase_from_independent": 0.17,
+      "life_cycle_cost": 685000.0,
+      "system_pf": 0.00014250000000000002,
+      "cost_vs_independent_pct": 14.166666666666666
+    }
+  ]
+}
