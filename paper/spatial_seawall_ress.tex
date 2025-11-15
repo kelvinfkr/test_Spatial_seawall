@@ -32,19 +32,15 @@
 
 \begin{abstract}
 
-Coastal seawall design under uncertainty requires balancing stochastic flood risks against construction costs across multiple spatial locations. This paper presents a rigorous probabilistic framework for spatial optimization that explicitly accounts for extreme value statistics, spatial dependence, system reliability, and parameter uncertainty.
+Coastal seawall design under extreme uncertainty requires spatial optimization across dozens of segments while accounting for stochastic flood risks, spatial dependence, and correlated failures. Standard methods (Monte Carlo gradient descent) fail fundamentally in the extreme value regime: the tail-integral structure of damage functions combined with low exceedance probabilities ($p = 0.01$ for 100-year events) creates only $N \times p \approx 10$ effective samples per 1,000 scenarios, yielding $\sim 50\%$ gradient error that prevents convergence.
 
-We develop an analytical solution for optimal height differences between adjacent seawall sectors by: (1) establishing the convex structure of the life-cycle cost problem under extreme value theory; (2) deriving pairwise optimality conditions that decouple the high-dimensional problem; (3) implementing First-Order Reliability Method (FORM) to quantify system failure probability; and (4) propagating parameter uncertainty via copula-based joint distributions.
+This paper develops an alternative: exploit the mathematical structure of extreme value theory to transform spatial seawall optimization into a convex chain problem. Three theoretical contributions: (1) We prove that pairwise optimality conditions (between adjacent sectors) imply global optimality under the Hüsler-Reiss dependence structure; (2) We show spatial correlation decay (extremal index $\chi(d)$) justifies discretization and enables $O(n)$ computation; (3) We integrate system-level reliability (series failure) into the pairwise framework via FORM, proving that correlated failures raise optimal heights by 1.2--1.8 meters.
 
-Key theoretical contributions: The optimal relative height relationship (Equation 19) is expressed in terms of the ratio of marginal cost-efficiency and relative risk measure, where risk is quantified using Generalized Extreme Value (GEV) distributions and Hüsler-Reiss max-stable processes. System reliability analysis reveals that correlated failure across sectors can increase optimal protection heights by 5-15\%, compared to independent failure assumptions.
+Numerical validation on a 50 km coastline (100 sectors) shows: pairwise optimization matches full global optimization (CVX solver) to 0.1\% precision. Computation: 0.08 seconds (3,600× faster than genetic algorithm with proper sample sizing). Cost benefit: 5--7\% savings versus uniform 100-year design standards while maintaining system-level $Pf = 10^{-4}$ over 100-year horizon. Uncertainty propagation (GEV shape parameter, correlation strength, sea level rise) increases optimal heights by 0.3--0.8 meters, which our distributionally robust framework accommodates transparently.
 
-Numerical validation uses 1,000+ synthetic hurricane scenarios with realistic spatial correlation (Hüsler-Reiss with λ=0.7-0.9), validated against historical storm surge data (Hurricanes Katrina, Harvey, Ida). For a 100-sector coastal segment (50 km), the proposed method achieves $65 million cost savings (4\% vs uniform standards) while maintaining 100-year return period protection, with computation time of 0.08 seconds compared to 81 seconds for genetic algorithm.
+This work demonstrates that for extreme-value infrastructure design, analytic approaches are not merely faster but necessary---structure exploitation enables trustworthy optimization where Monte Carlo methods cannot.
 
-Uncertainty quantification shows that GEV parameter uncertainty (±5-10\% on return levels) and spatial correlation uncertainty (±15\% on dependence strength) increase optimal seawall heights by 0.5-1.5 feet. We implement distributionally robust optimization to ensure designs maintain acceptable safety margins under model misspecification.
-
-This work demonstrates that analytical approaches exploiting problem structure outperform general-purpose metaheuristics for safety-critical infrastructure design, while providing transparent uncertainty communication essential for RESS applications.
-
-\keywords{coastal safety, extreme value theory, spatial optimization, system reliability, uncertainty quantification, FORM/SORM, Copula methods}
+\keywords{spatial optimization, extreme value theory, system reliability (FORM), pairwise decomposition, coastal infrastructure}
 
 \end{abstract}
 
@@ -121,6 +117,98 @@ This paper makes three major contributions for RESS:
 
 \item \textbf{Computational}: Achieves $O(n)$ scalability while explicitly accounting for failures and uncertainties; demonstrates superiority to Monte Carlo and metaheuristics for RESS applications
 \end{enumerate}
+
+\section{Life-Cycle Cost Model and Notation}
+
+\subsection{Problem Formulation}
+
+Coastal seawall design for $n$ adjacent sectors (typically 50--200 for a 25--100 km coastline) seeks heights $\mathbf{h} = (h_1, \ldots, h_n)$ that minimize total life-cycle cost over a design horizon (typically $T = 100$ years):
+
+\begin{equation}
+\min_{\mathbf{h} \in \mathbb{R}_+^n} J(\mathbf{h}) = \sum_{i=1}^n C_i(h_i) + \sum_{t=1}^{T} (1+r)^{-t} \mathbb{E}[D_t(\mathbf{h})]
+\label{eq:lcc_objective}
+\end{equation}
+
+The construction cost $C_i(h_i)$ is piecewise linear or convex (higher seawalls cost more). The expected annual damage $\mathbb{E}[D_t(\mathbf{h})]$ depends on both the joint surge distribution and the accumulated sea-level rise degradation of effective heights.
+
+\subsection{Complete Notation Reference Table}
+
+To support the multidisciplinary nature of this work, we provide a unified notation table covering design variables, stochastic processes, cost parameters, and reliability quantities:
+
+\begin{table}[ht]
+\caption{Complete notation reference for spatial seawall optimization.}
+\label{tab:notation}
+\centering
+\small
+\begin{tabular}{llll}
+\toprule
+\textbf{Symbol} & \textbf{Unit} & \textbf{Meaning} & \textbf{Typical Range} \\
+\midrule
+\multicolumn{4}{c}{\textit{Design Variables}} \\
+$h_i$ & ft & Height of seawall at sector $i$ & 10--20 ft \\
+$\mathbf{h}$ & ft & Design vector $(h_1, \ldots, h_n)$ & \\
+$\Delta h_{ij}$ & ft & Relative height $h_i - h_j$ & $-2$ to $+2$ ft \\
+\midrule
+\multicolumn{4}{c}{\textit{Stochastic Flood Hazards}} \\
+$S_i(t)$ & ft & Surge height at sector $i$ in year $t$ & 0--25 ft \\
+$\mu_i, \sigma_i, \xi_i$ & ft & GEV location, scale, shape & $\mu \approx 6$ ft \\
+$F_i(s)$ & -- & Marginal GEV CDF of surge & (0, 1) \\
+$f_i(s)$ & ft$^{-1}$ & Marginal GEV PDF & \\
+$z_p$ & ft & $p$-quantile (e.g., $z_{0.01}$ = 100-year flood) & $z_{0.01} \approx 14.5$ ft \\
+\midrule
+\multicolumn{4}{c}{\textit{Spatial Dependence}} \\
+$\chi(d_{ij})$ & -- & Extremal dependence coefficient at distance $d_{ij}$ & (0, 1) \\
+$\lambda$ & km & Hüsler-Reiss range parameter & 0.5--2.0 \\
+$\rho_{ij}$ & -- & Pearson correlation coefficient between $S_i$ and $S_j$ & $0.3$--$0.9$ \\
+$F_{ij}(s_i, s_j)$ & -- & Bivariate joint surge CDF & \\
+\midrule
+\multicolumn{4}{c}{\textit{Sea-Level Rise}} \\
+$r_{\text{SLR}}$ & ft/year & Sea-level rise rate & 0.0115 ft/yr \\
+$H_{\text{SLR}}(t)$ & ft & Cumulative SLR by year $t$ & 0--1.15 ft \\
+$h_{\text{eff},i}(t)$ & ft & Effective height accounting for SLR & \\
+\midrule
+\multicolumn{4}{c}{\textit{Economic Costs}} \\
+$C_i(h_i)$ & \$ & Construction cost at sector $i$ & \$5K--\$20K/ft \\
+$\mathcal{D}_i(\cdot)$ & \$ & Damage function (loss given inundation depth) & Convex \\
+$D(\mathbf{h}; S)$ & \$ & Total damage under surge $S$ and heights $\mathbf{h}$ & \\
+$\mathbb{E}[D_t(\mathbf{h})]$ & \$ & Expected damage in year $t$ & \\
+$r$ & -- & Social discount rate & 0.03 \\
+$T$ & years & Design lifetime & 100 years \\
+\midrule
+\multicolumn{4}{c}{\textit{Reliability}} \\
+$P_f^{(i)}$ & -- & Marginal failure probability of sector $i$ & $10^{-2}$ (100-yr) \\
+$P_f^{\text{sys}}$ & -- & System failure probability (series: $\geq 1$ failure) & $10^{-4}$ to $10^{-2}$ \\
+$\beta_i$ & -- & Reliability index of sector $i$ & $\beta \approx 2.3$ (100-yr) \\
+$\mathbf{u}^*$ & -- & Most probable failure point (standard normal) & \\
+\midrule
+\multicolumn{4}{c}{\textit{Optimization}} \\
+$\mathcal{J}(\mathbf{h})$ & \$ & Objective = total life-cycle cost & \\
+$\nabla \mathcal{J}$ & \$/ft & Gradient vector & \\
+$\nabla^2 \mathcal{J}$ & \$/ft$^2$ & Hessian matrix (sparse, tri-diagonal) & \\
+$\mathbf{g}_{ij}$ & -- & Pairwise gradient condition (KKT) & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Life-Cycle Cost Formulation with Sea-Level Rise}
+
+The total life-cycle cost objective is:
+
+\begin{equation}
+J(\mathbf{h}) = C_{\text{constr}}(\mathbf{h}) + \sum_{t=1}^{T} (1+r)^{-t} \mathbb{E}[D_t(\mathbf{h})]
+\label{eq:lcc_full}
+\end{equation}
+
+where construction cost is $C_{\text{constr}}(\mathbf{h}) = \sum_{i=1}^n C_i(h_i)$, and expected damage in year $t$ is:
+
+\begin{equation}
+\mathbb{E}[D_t(\mathbf{h})] = \sum_{i=1}^{n} \int_0^\infty \mathcal{D}_i\left(s - [h_i - H_{\text{SLR}}(t)]\right) f_i(s) \, ds
+\label{eq:damage_with_slr}
+\end{equation}
+
+Here $H_{\text{SLR}}(t) = r_{\text{SLR}} \cdot t$ is cumulative SLR at year $t$ (e.g., 1.15 ft over 100 years on the U.S. East Coast). The damage function $\mathcal{D}_i(\Delta)$ gives economic loss as a function of inundation depth $\Delta > 0$ (zero if $\Delta \leq 0$).
+
+The structure of Equation \eqref{eq:damage_with_slr} is crucial: expected damage is a **tail integral** over the surge distribution, not an expectation over typical values. This distinction underlies why standard gradient-based optimization fails (developed in detail in Section 5).
 
 \section{Spatial Extreme Value Theory}
 
