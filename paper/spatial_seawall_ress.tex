@@ -639,83 +639,108 @@ This decoupling is not merely an approximation suitable only in the limit; it is
 
 \subsubsection{Algorithm Comparison: Sampling versus Analytical Methods}
 
-To consolidate the theoretical arguments developed above, we now present explicit algorithmic comparisons. The sampling + gradient descent approach is illustrated step-by-step in Figure \ref{fig:flowchart_sampling}, while the analytical GEV + Newton's method is shown in Figure \ref{fig:flowchart_analytical_gev}. These flowcharts make visible the fundamental difference in how the two methods approach the optimization problem.
+To consolidate the theoretical arguments developed above, we now present explicit algorithmic comparisons. Algorithm \ref{alg:sampling} shows the sampling + gradient descent approach, while Algorithm \ref{alg:analytical_gev} shows the analytical GEV + Newton's method. These algorithms make visible the fundamental difference in how the two methods approach the optimization problem: information-limited sampling versus structure-exploiting analytical computation.
 
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.9\textwidth]{results/flowchart_sampling_gradient.png}
-\caption{Step-by-step flowchart of sampling + gradient descent method. The critical bottleneck is that at each iteration, only $N \times p = 10$ out of 1,000 samples contribute non-zero gradient information, resulting in 50\%+ gradient estimation error and convergence to suboptimal solutions.}
-\label{fig:flowchart_sampling}
-\end{figure}
+\begin{algorithm}[ht]
+\caption{Sampling-Based Gradient Descent for Seawall Optimization}
+\label{alg:sampling}
+\begin{algorithmic}[1]
+\Require{Number of scenarios $N = 1000$, initial heights $\mathbf{h}^{(0)}$, learning rate $\alpha = 0.01$}
+\State Generate $N$ synthetic flood scenarios $\{S^{(1)}, \ldots, S^{(N)}\}$ via Monte Carlo
+\State $\text{cost} \leftarrow \infty$; $\text{iteration} \leftarrow 0$
+\While{$\text{iteration} < T_{\max} = 50$ \textbf{and} $|\Delta \text{cost}| > \epsilon$}
+  \State Evaluate empirical cost: $\hat{\mathcal{J}}(\mathbf{h}) = \frac{1}{N} \sum_{k=1}^{N} [\sum_i C_i(h_i) + D(\mathbf{h}; S^{(k)})]$
+  \State Estimate gradient via finite differences: $\hat{g}_i = \frac{\hat{\mathcal{J}}(h_i + \delta) - \hat{\mathcal{J}}(\mathbf{h})}{\delta}$ for all $i$
+  \State \textcolor{red}{\textbf{WARNING}}: Only $N \times p = 10$ of 1000 scenarios produce non-zero damage
+  \State \textcolor{red}{\textbf{CONSEQUENCE}}: Relative gradient error $\approx 50\%$ due to sparsity in $\sqrt{N \cdot p}$ denominator
+  \State Update heights: $\mathbf{h} \leftarrow \mathbf{h} - \alpha \hat{g}$
+  \State $\Delta \text{cost} \leftarrow \text{cost} - \hat{\mathcal{J}}(\mathbf{h})$; $\text{cost} \leftarrow \hat{\mathcal{J}}(\mathbf{h})$
+  \State $\text{iteration} \leftarrow \text{iteration} + 1$
+\EndWhile
+\State \textcolor{red}{\textbf{OUTPUT}}: Suboptimal heights $\mathbf{h}^*$ due to noisy random walk; \textbf{Time}: 73 seconds
+\end{algorithmic}
+\end{algorithm}
 
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.9\textwidth]{results/flowchart_analytical_gev.png}
-\caption{Step-by-step flowchart of analytical GEV + Newton's method. Gradients are computed exactly through numerical integration of the fitted distribution, with zero sampling error. The Hessian matrix is sparse due to Hüsler-Reiss decoupling, allowing efficient Newton updates. Convergence is guaranteed in 3-5 iterations.}
-\label{fig:flowchart_analytical_gev}
-\end{figure}
+\begin{algorithm}[ht]
+\caption{Analytical GEV + Newton's Method for Seawall Optimization}
+\label{alg:analytical_gev}
+\begin{algorithmic}[1]
+\Require{Historical surge data $\{S_{\text{obs}}^{(1)}, \ldots, S_{\text{obs}}^{(M)}\}$ where $M = 30$ years, initial heights $\mathbf{h}^{(0)}$}
+\State Fit GEV distribution to historical data: $\hat{F}_{\text{GEV}}(s; \hat{\mu}, \hat{\sigma}, \hat{\xi})$ via MLE
+\State Estimate Hüsler-Reiss max-stable parameters $\{\hat{\lambda}_{ij}\}$ via composite likelihood \cite{padoan2010multivariate}
+\State Initialize: $\text{iteration} \leftarrow 0$; $\text{convergence} \leftarrow \text{FALSE}$
+\While{$\text{iteration} < 5$ \textbf{and} \textbf{not} \text{convergence}}
+  \State Compute cost analytically: $\mathcal{J}(\mathbf{h}) = \sum_i C_i(h_i) + \sum_t (1+r)^{-t} \int_{h_i}^{\infty} D(s) \hat{f}_{\text{GEV}}(s) ds$
+  \State Compute gradients via numerical integration: $g_i = \frac{\partial \mathcal{J}}{\partial h_i} = \frac{\partial C_i}{\partial h_i} - D(h_i) \hat{f}_{\text{GEV}}(h_i)$
+  \State \textcolor{blue}{\textbf{KEY ADVANTAGE}}: Gradients computed exactly from fitted distribution, \textbf{zero sampling error}
+  \State Compute Hessian: $H_{ij} = \frac{\partial^2 \mathcal{J}}{\partial h_i \partial h_j}$
+  \State \textcolor{blue}{\textbf{STRUCTURE}}: Hessian is sparse (nearly diagonal) due to Hüsler-Reiss decoupling (Eq. \ref{eq:decoupling})
+  \State Solve Newton step: $\Delta \mathbf{h} = -H^{-1} \mathbf{g}$ (efficient due to sparsity)
+  \State Update: $\mathbf{h} \leftarrow \mathbf{h} + \Delta \mathbf{h}$
+  \State Check convergence: $\|\Delta \mathbf{h}\| < 10^{-6}$ or relative gradient norm $< 10^{-8}$
+  \State $\text{iteration} \leftarrow \text{iteration} + 1$
+\EndWhile
+\State \textcolor{blue}{\textbf{OUTPUT}}: Optimal heights $\mathbf{h}^*$ with guaranteed convergence; \textbf{Time}: 0.08 seconds (912× speedup)
+\end{algorithmic}
+\end{algorithm}
 
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.8\textwidth]{results/comparison_schematic.png}
-\caption{Conceptual comparison of information-limited versus structure-exploiting approaches. (Left) Sampling methods are constrained by Shannon information-theoretic bounds that require 10,000+ scenarios to achieve reliable gradient estimates. (Right) Analytical methods exploit the mathematical structure of extreme value distributions to compute exact gradients from 50-100 years of historical data, eliminating sampling noise and enabling efficient optimization.}
-\label{fig:comparison_schematic}
-\end{figure}
+\paragraph{Algorithm Comparison:}
 
-The sampling method (Figure \ref{fig:flowchart_sampling}) begins with 1,000 synthetic scenarios but immediately encounters the information-sparsity problem: 99\% of samples produce zero damage in the design height range. Each gradient estimation is therefore noisy (50\%+ relative error), and the optimization trajectory becomes a noisy random walk that settles into a local optimum. The total computational cost is $73$ seconds for a 50-sector system with 50 optimization iterations.
+The sampling method (Algorithm \ref{alg:sampling}) begins with 1,000 synthetic scenarios but immediately encounters the information-sparsity problem: only $N \times p = 10$ of 1,000 samples produce non-zero damage in the design height range. The standard error of the gradient scales as $\text{SE}[\hat{g}] \propto 1/\sqrt{N \cdot p}$, yielding 50\%+ relative error. The optimization trajectory becomes a noisy random walk that settles into a local suboptimum. Total computational cost: 73 seconds for 50 optimization iterations on a 50-sector system.
 
-The analytical method (Figure \ref{fig:flowchart_analytical_gev}) begins not with scenarios but with historical data. The GEV distribution fitted to this data provides an analytical model of the tail behavior. Gradients are then computed through exact mathematical operations (numerical integration) with zero sampling error. The Newton's method exploits the sparse structure of the Hessian (diagonal-dominant due to Hüsler-Reiss decoupling) to update efficiently, achieving convergence in 3-5 iterations. Total computational cost: $0.08$ seconds---a 912× speedup relative to the sampling method with 1,000 scenarios, or a 9,125× speedup relative to the properly-configured sampling method with 10,000 scenarios.
+The analytical method (Algorithm \ref{alg:analytical_gev}) begins not with scenarios but with historical data and a fitted distribution. Gradients are computed through exact mathematical operations (numerical integration of the fitted GEV tail) with zero sampling error. The Newton's method exploits the sparse Hessian structure (due to Hüsler-Reiss decoupling, where joint failures decay exponentially) to update efficiently, achieving convergence in 3-5 iterations. Total computational cost: 0.08 seconds---a 912× speedup relative to sampling with 1,000 scenarios, or a 9,125× speedup relative to properly-configured sampling with 10,000 scenarios.
 
 This comparison demonstrates that our choice of the analytical approach is not merely a preference for speed, but a necessity imposed by the mathematics of extreme value optimization. The information-theoretic constraints are absolute: sampling-based methods cannot be made to work reliably without prohibitive computational expense. The analytical approach, by contrast, aligns the solution method with the mathematical structure of the problem.
 
+
 \subsubsection{Comprehensive Baseline Analysis: Empirical Validation}
 
-To rigorously validate these theoretical arguments, we conduct comprehensive empirical analysis across multiple dimensions:
+To rigorously validate these theoretical arguments, we conduct comprehensive empirical analysis across multiple dimensions. Six complementary visualizations are presented below, demonstrating the fundamental challenges of sampling-based approaches in extreme value optimization.
 
-\paragraph{Gradient Landscape Analysis (Figure 1a-c):}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{results/3d_gradient_landscape.png}
+\caption{Gradient landscape analysis in the extreme value regime. (Left) Cost surface shows construction cost plus expected damage as a function of seawall height and damage magnitude. (Center) Gradient magnitude surface reveals near-zero gradients at practical design heights (14-16 ft), making the landscape essentially flat. (Right) Gradient magnitude contour plot highlights the critical region (red shaded) where optimization must occur, demonstrating why standard gradient-based methods fail: there is insufficient gradient signal to guide the search.}
+\label{fig:gradient_landscape}
+\end{figure}
 
-Three-dimensional visualization of the cost surface reveals the fundamental challenge in the extreme value regime. The cost surface plots construction cost plus expected damage against seawall height and damage magnitude. The gradient magnitude surface shows that at practical design heights (14-16 ft), gradients are nearly zero, making the optimization landscape essentially flat. The gradient magnitude contour plot highlights this critical region (red shaded area), demonstrating why standard gradient-based methods fail.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{results/sample_efficiency_analysis.png}
+\caption{Sample efficiency and convergence analysis for gradient descent. At $N = 1000$ samples (standard baseline), only $N \times p = 10$ events produce non-zero gradients. This creates relative gradient estimation error of approximately 50\%, making optimization unreliable. Increasing to $N = 10,000$ reduces relative error to 15\%, which is only marginally acceptable for design purposes. The figure clearly marks the boundary between the reliable and unreliable optimization regimes, corresponding to the information-theoretic limits established in Section 4.2.2.}
+\label{fig:sample_efficiency}
+\end{figure}
 
-\paragraph{Sample Efficiency and Convergence (Figure 2a-b):}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{results/extreme_value_sparsity.png}
+\caption{Extreme value sparsity: the fundamental bottleneck of sampling methods. Four complementary plots demonstrate: (a) Stacked bar chart showing signal (damage events, blue) overwhelmed by noise (zero-damage events, gray). (b) Zero-damage percentage rises from 63.5\% at $h=10$ ft to 99.9\% at $h=20$ ft, creating a highly imbalanced classification problem. (c) Gradient estimation error increases exponentially as design height increases. (d) Signal-to-noise ratio falls below 0.01 in the practical design range, indicating a fundamentally ill-posed problem for sampling-based methods.}
+\label{fig:extreme_sparsity}
+\end{figure}
 
-We analyze gradient estimation error as a function of total samples. At 1,000 samples (standard baseline), only $N \times 0.01 = 10$ events contribute non-zero gradient information. This creates estimation error of approximately 50\%, making gradient descent unreliable. Increasing to 10,000 samples reduces relative error to 15\%, which is only marginally acceptable. The sample efficiency plot clearly marks the boundary between reliable and unreliable optimization regimes.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{results/lifecycle_cost_dynamics.png}
+\caption{Life-cycle cost dynamics over the 100-year design horizon, accounting for sea level rise. (a) Annual expected damage increases from \$582 (Year 1) to \$1,257 (Year 100) due to cumulative sea level rise of 1.15 ft. (b) Present value of damages decays exponentially due to 3\% annual discounting. (c) Cumulative discounted damage: only 3.9\% of total present-value cost is future damage, 96.1\% is construction. (d) Year-by-year contribution to total cost, showing sharp decline after Year 30. This validates our emphasis on construction cost minimization with damage as a secondary consideration.}
+\label{fig:lifecycle_dynamics}
+\end{figure}
 
-\paragraph{Extreme Value Sparsity (Figure 3a-d):}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{results/method_comparison.png}
+\caption{Comparative performance across five optimization methods. (a) Computation time on logarithmic scale: GEV analytical (0.08 sec) achieves 912× speedup versus sampling-based gradient descent with 1,000 scenarios (73 sec). (b) Solution quality normalized to optimum: GEV = 100\%, sampling-based = 75--92\%. (c) Solution variance: GEV = 2\% (deterministic) versus genetic algorithm = 20\% (stochastic). (d) Pareto frontier showing that GEV dominates across all metrics (high-right corner), while sampling and metaheuristic methods cluster in lower-left region, confirming the superiority of structure-exploiting approaches.}
+\label{fig:method_comparison}
+\end{figure}
 
-Four complementary plots demonstrate the severity of the information sparsity problem:
-\begin{itemize}
-\item Stacked bar chart shows signal (damage events) overwhelmed by noise (zero-damage events)
-\item Zero-damage percentage rises from 63.5\% at $h=10$ ft to 99.9\% at $h=20$ ft
-\item Gradient estimation noise increases exponentially as height increases
-\item Signal-to-noise ratio falls below 0.01 in the practical design range, indicating an ill-posed problem
-\end{itemize}
-
-\paragraph{Life-Cycle Cost Dynamics with SLR (Figure 4a-d):}
-
-Year-by-year analysis shows how sea level rise accumulates over the design life. Annual expected damage increases from \$582 (Year 1) to \$1,257 (Year 100) due to 1.15 ft of effective height loss. The discounting effect dominates (5.2\% weight on Year 100 damages), explaining why the present value of 100-year damages is only 3.9\% of total cost. This validates our emphasis on construction cost minimization with damage as a secondary consideration.
-
-\paragraph{Method Comparison Summary (Figure 5a-d):}
-
-Comparative metrics across five optimization methods:
-\begin{itemize}
-\item \textbf{Computation time (log scale)}: GEV analytical = 0.08 sec vs Gradient descent (1K) = 73 sec (1000× speedup)
-\item \textbf{Solution quality}: GEV = 100\% optimal vs Sampling-based = 75-92\% optimal
-\item \textbf{Solution variance}: GEV = 2\% (deterministic) vs Genetic algorithm = 20\% (stochastic)
-\item \textbf{Pareto frontier}: GEV dominates across all metrics (high-right corner), while sampling methods cluster in lower-left region
-\end{itemize}
-
-\paragraph{Theoretical Convergence Analysis (Figure 6a-c):}
-
-Formal convergence rate analysis demonstrates:
-\begin{itemize}
-\item Gradient variance scales as $O(1/\sqrt{N \cdot p})$ where $p = 0.01$ is exceedance probability
-\item For 100-year events, need $N = O(10,000)$ to achieve 15\% gradient accuracy
-\item Different return periods require multiplicatively more samples (100-year: 10K, 500-year: 50K, 1000-year: 100K)
-\item Analytical GEV method achieves optimal accuracy with only 50-100 historical data points
-\end{itemize}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{results/theoretical_analysis.png}
+\caption{Theoretical convergence rate analysis and information-theoretic bounds. (a) Gradient variance scales as $O(1/\sqrt{N \cdot p})$ where $p = 0.01$ is the exceedance probability for 100-year events. (b) Sample size required for different accuracy levels: $N = 1,000$ gives 50\% error, $N = 10,000$ gives 15\% error, $N = 100,000$ gives 5\% error. (c) Return period scaling: different return periods require multiplicatively more samples (100-year: 10K, 500-year: 50K, 1000-year: 100K). (d) Analytical GEV method with only 50--100 historical data points achieves superior accuracy while eliminating sampling noise, confirming the theoretical results from Section 4.2.1--4.2.3.}
+\label{fig:theoretical_analysis}
+\end{figure}
 
 \noindent
-These six comprehensive analyses (detailed in supplementary materials) collectively establish that sampling-based gradient descent is not merely slower than the analytical approach, but fundamentally limited by information-theoretic constraints inherent to extreme value problems.
+These six comprehensive analyses collectively establish that sampling-based gradient descent is not merely slower than the analytical approach, but fundamentally limited by information-theoretic constraints inherent to extreme value problems. The analytical GEV + Newton's method (Algorithm \ref{alg:analytical_gev}), by contrast, exploits the mathematical structure of extreme value distributions to achieve both superior efficiency and guaranteed optimality.
 
 \section{Numerical Experiments}
 
