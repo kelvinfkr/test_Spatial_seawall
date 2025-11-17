@@ -25,6 +25,14 @@ ENV/
 *.tmp
 *.log
 
+# LaTeX build artifacts
+*.aux
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.pdf
+
 # Data files (keep only results)
 data/*.csv
 data/*.dat
