@@ -1,5 +1,4 @@
 \documentclass[12pt]{article}
-\usepackage[utf-8]{inputenc}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{mathtools}
 \usepackage{algorithm}
@@ -583,12 +582,12 @@ Estimating this via Monte Carlo:
 
 The variance of this estimator is:
 \[
-\Var\left[\frac{\partial}{\partial h}E[(S-h)_+]\right] \sim \frac{p(1-p)}{N} \approx \frac{p}{N}
+\text{Var}\left[\frac{\partial}{\partial h}E[(S-h)_+]\right] \sim \frac{p(1-p)}{N} \approx \frac{p}{N}
 \]
 
 For the full gradient $\nabla J \in \mathbb{R}^n$, if gradients at each site are estimated with $N$ samples, the combined variance scales as:
 \[
-\Var[\nabla J] \sim O\left(\frac{p}{N}\right) = O\left(\frac{1}{N_{\text{eff}}}\right)
+\text{Var}[\nabla J] \sim O\left(\frac{p}{N}\right) = O\left(\frac{1}{N_{\text{eff}}}\right)
 \]
 
 Standard deviation thus scales as $O(1/\sqrt{N_{\text{eff}}})$. For $N_{\text{eff}}=2$, standard errors are large relative to the signal, causing gradient-based optimization to oscillate wildly.
@@ -784,7 +783,7 @@ All experiments use the following baseline parameters unless otherwise specified
 
     \item \emph{Damage model:} Expected damage $D_i(h_i) = \int_{h_i}^\infty (s-h_i) f_{S_i}(s) ds$ with asset value $V_i = \$1$~M per km (representative for developed coastlines).
 
-    \item \emph{Cost model:} Construction cost $C_i(h_i) = 0.5 \cdot h_i^{1.8}$ ($/km, power-law reflecting material nonlinearity).
+    \item \emph{Cost model:} Construction cost $C_i(h_i) = 0.5 \cdot h_i^{1.8}$ (\$/km, power-law reflecting material nonlinearity).
 
     \item \emph{Spatial dependence:} Hüsler-Reiss bivariate extreme-value distribution with $\chi(d) = \exp(-\lambda d)$, where $\lambda = 0.4$ km$^{-1}$ (typical decay for storm surge).
 
@@ -921,7 +920,7 @@ The analysis above reveals an information-theoretic barrier to Monte Carlo metho
 \begin{enumerate}
     \item \emph{Tail integral structure:} Expected losses are integrals over exponentially-rare regions. Sampling these regions requires effective sample size $N_{\text{eff}} = Np$. For $p=0.01$ and practical $N \leq 1000$, the effective sample size is negligible ($N_{\text{eff}} \leq 10$).
 
-    \item \emph{Gradient variance scaling:} Gradient estimates scale with variance $\Var[\nabla J] \sim p/N \sim 1/N_{\text{eff}}$. This leads to gradient errors exceeding 70\% for $N_{\text{eff}} = 2$, preventing gradient descent convergence.
+    \item \emph{Gradient variance scaling:} Gradient estimates scale with variance $\text{Var}[\nabla J] \sim p/N \sim 1/N_{\text{eff}}$. This leads to gradient errors exceeding 70\% for $N_{\text{eff}} = 2$, preventing gradient descent convergence.
 
     \item \emph{Sample complexity lower bounds:} By Cramér-Rao bounds, achieving gradient accuracy $\epsilon = 0.1$ requires $N \geq 10^4$ samples. This is impractical for real-time optimization.
 
